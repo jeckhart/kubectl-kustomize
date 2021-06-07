@@ -76,19 +76,12 @@ jobs:
     - name: Build and push
       id: build
       if: steps.image_existence.outputs.exists == 'false'
-      env:
-        BUILDER_INSTANCE: ${{ steps.buildx.outputs.name }}
-        IMAGE_TAG: ${{ steps.image_existence.outputs.tag }}
-        KUBECTL_VERSION: ${{ steps.kubectl.outputs.version }}
-        KUSTOMIZE_VERSION: ${{ steps.kustomize.outputs.version }}
-        REPO_OWNER: ${{github.repository_owner}}
-      run: |
-        docker buildx build \
-          --builder ${BUILDER_INSTANCE} \
-          --tag ${REPO_OWNER}/kubectl-kustomize:${IMAGE_TAG} \
-          --platform linux/amd64,linux/arm64 \
-          --push \
-          --build-arg KUBECTL_VERSION=${KUBECTL_VERSION} \
-          --build-arg KUSTOMIZE_VERSION=${KUSTOMIZE_VERSION} \
-          .
-        echo ::set-output name=tag::${IMAGE_TAG}
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: ${{github.repository_owner}}/kubectl-kustomize:${{ steps.image_existence.outputs.tag }},${{github.repository_owner}}/kubectl-kustomize:latest
+        build-args: |
+          KUBECTL_VERSION=${{steps.kubectl.outputs.version}}
+          KUSTOMIZE_VERSION=${{ steps.kustomize.outputs.version }}
+          REPO_OWNER=${{github.repository_owner}}
